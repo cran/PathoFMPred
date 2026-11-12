@@ -1,0 +1,63 @@
+Package: PathoFMPred
+Type: Package
+Title: Tumour Feature Models from Pathology Representations
+Version: 0.1.0
+URL: https://github.com/tkcaccia/PathoFMPred
+BugReports: https://github.com/tkcaccia/PathoFMPred/issues
+Authors@R: c(
+    person("Aamilah", "Ismail", role = "aut"),
+    person("Martin", "Ocharo", role = "aut"),
+    person("Giulia", "Canarutto", role = "aut"),
+    person("Moussa Kassim", "Mohamed", role = "aut", email = "moussa.kassim@icgeb.org"),
+    person("Dalia", "Ahmed", role = "aut", email = "dalia.ahmed@icgeb.org"),
+    person("Brendon", "Price", role = "aut"),
+    person("Dupe", "Ojo", role = "aut", email = "dupe.ojo@icgeb.org"),
+    person("Ekene Emmanuel", "Nweke", role = "aut"),
+    person("Alessia", "Vignoli", role = "aut",
+      email = "vignoli@cerm.unifi.it"),
+    person("Silvano", "Piazza", role = "aut"),
+    person("Dinesh", "Gupta", role = "aut"),
+    person("Leonardo", "Tenori", role = "aut",
+      email = "tenori@cerm.unifi.it"),
+    person("Stefano", "Cacciatore", role = c("aut", "cre"),
+      email = "tkcaccia@gmail.com")
+  )
+Description: Builds and applies portable cancer-specific partial least squares
+    (PLS) regression and partial least squares with linear discriminant analysis
+    (PLS-LDA) model collections from pathology foundation-model
+    representations. Feature and outcome tables are linked by explicit patient
+    identifiers, repeated slide rows are pooled at patient level, and model
+    development uses nested cross-validation before final fitting. The source
+    package contains no fitted foundation-model parameters, embeddings,
+    patient-level data, or atlas registry. Users may download a separately
+    licensed, checksum-verified Prov-GigaPath collection after installation,
+    or load authorized collections from local files. Outputs are research
+    estimates without external-validation or clinical-use claims. The methods
+    build on Wold et al. (2001) <doi:10.1016/S0169-7439(01)00155-1> and
+    Barker and Rayens (2003) <doi:10.1002/cem.785>.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.6.0)
+Imports: digest, fastPLS (>= 0.4), ggplot2, rmarkdown, stats, utils
+Suggests: knitr, testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0
+NeedsCompilation: no
+Packaged: 2026-10-27 08:40:32 UTC; stefano
+Author: Aamilah Ismail [aut],
+  Martin Ocharo [aut],
+  Giulia Canarutto [aut],
+  Moussa Kassim Mohamed [aut],
+  Dalia Ahmed [aut],
+  Brendon Price [aut],
+  Dupe Ojo [aut],
+  Ekene Emmanuel Nweke [aut],
+  Alessia Vignoli [aut],
+  Silvano Piazza [aut],
+  Dinesh Gupta [aut],
+  Leonardo Tenori [aut],
+  Stefano Cacciatore [aut, cre]
+Maintainer: Stefano Cacciatore <tkcaccia@gmail.com>
+Repository: CRAN
+Date/Publication: 2026-11-12 11:20:08 UTC

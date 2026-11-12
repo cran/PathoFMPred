@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="PathoFMPred authors" />
+
+
+<title>PathoFMPred: building and using portable pathology models</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">PathoFMPred: building and using portable
+pathology models</h1>
+<h4 class="author">PathoFMPred authors</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#scope-and-distribution" id="toc-scope-and-distribution"><span class="toc-section-number">1</span> Scope and distribution</a></li>
+<li><a href="#download-the-optional-prov-gigapath-collection" id="toc-download-the-optional-prov-gigapath-collection"><span class="toc-section-number">2</span> Download the optional Prov-GigaPath
+collection</a></li>
+<li><a href="#build-a-pathofmpred-object-from-a-new-representation" id="toc-build-a-pathofmpred-object-from-a-new-representation"><span class="toc-section-number">3</span> Build a PathoFMPred object from a
+new representation</a></li>
+<li><a href="#build-titan-giga-ssl-and-prov-gigapath-objects-locally" id="toc-build-titan-giga-ssl-and-prov-gigapath-objects-locally"><span class="toc-section-number">4</span> Build TITAN, Giga-SSL and
+Prov-GigaPath objects locally</a>
+<ul>
+<li><a href="#titan-inputs-and-local-fit" id="toc-titan-inputs-and-local-fit"><span class="toc-section-number">4.1</span> TITAN inputs and local
+fit</a></li>
+<li><a href="#giga-ssl-inputs-and-local-fit" id="toc-giga-ssl-inputs-and-local-fit"><span class="toc-section-number">4.2</span> Giga-SSL inputs and local
+fit</a></li>
+<li><a href="#prov-gigapath-inputs-and-local-fit" id="toc-prov-gigapath-inputs-and-local-fit"><span class="toc-section-number">4.3</span> Prov-GigaPath inputs and local
+fit</a></li>
+</ul></li>
+<li><a href="#use-an-authorized-atlas-collection" id="toc-use-an-authorized-atlas-collection"><span class="toc-section-number">5</span> Use an authorized atlas
+collection</a></li>
+</ul>
+</div>
+
+<div id="scope-and-distribution" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Scope and
+distribution</h1>
+<p>PathoFMPred stores many cancer-specific PLS regression and PLS-LDA
+fits in one portable object for each pathology slide representation. The
+object contains fitted parameters, feature order, development metrics,
+and provenance. It does not contain the original feature or outcome
+rows.</p>
+<p>The CRAN-oriented package contains no fitted model, atlas registry,
+patient rows, or slide embeddings. A user can fit a new collection from
+authorized input tables or load a collection obtained separately under
+its applicable terms. No model is downloaded during installation,
+package loading, checking, or vignette construction.</p>
+<p>The public package distributes no fitted objects in its installation
+archive. An optional Prov-GigaPath collection is released separately.
+TITAN and Giga-SSL collections remain outside the public release; users
+may build objects locally from inputs they are authorized to use.</p>
+<p>The PathoFMPred source code is MIT licensed. Separately obtained
+fitted objects and third-party inputs are not covered by that grant. The
+package licensing boundary is recorded in
+<code>inst/licenses/MODEL_ACCESS.md</code>.</p>
+<p>All supplied performance estimates are internal research estimates.
+They do not establish external validity, assay equivalence, or clinical
+utility.</p>
+<p>PathoFMPred checks that the installed fastPLS version matches the
+version recorded in each fitted object before inference. The model
+metadata also records software provenance, but installation from CRAN or
+another source does not change the prediction rule when the package
+version is the same.</p>
+</div>
+<div id="download-the-optional-prov-gigapath-collection" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Download the optional
+Prov-GigaPath collection</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(PathoFMPred)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>model_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;pathofmpred-models&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">fetch_pathofmpred_models</span>(<span class="st">&quot;ProvGigaPath&quot;</span>, <span class="at">destination =</span> model_dir)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">options</span>(<span class="at">PathoFMPred.model_dir =</span> model_dir)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">available_foundation_models</span>()</span></code></pre></div>
+<p>The helper verifies the pinned SHA-256 digest before installing the
+separately licensed object in the directory selected by the caller. The
+public Prov-GigaPath collection contains 620 fitted models, but no
+patient-level prediction reference scores; its reference ranks are
+unavailable. Giga-SSL requires an explicit authorized source URL and
+digest, or a locally created collection. No download occurs while
+building this vignette.</p>
+</div>
+<div id="build-a-pathofmpred-object-from-a-new-representation" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Build a PathoFMPred
+object from a new representation</h1>
+<p>The first three arguments are mandatory. Both tables must contain the
+column named by <code>id_column</code>. The outcome table must contain
+unique IDs. The feature table may contain repeated IDs, such as several
+slides from one patient. Repeated rows are pooled by patient mean by
+default or by patient median when <code>aggregation = &quot;median&quot;</code> is
+selected. More than 100 unique IDs must match.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>features <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;foundation_model_features.csv&quot;</span>, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>outcomes <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;patient_outcomes.csv&quot;</span>, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>custom_object <span class="ot">&lt;-</span> <span class="fu">create_pathofmpred_object</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">feature_table =</span> features,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">outcome_table =</span> outcomes,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">id_column =</span> <span class="st">&quot;patient_id&quot;</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">foundation_model =</span> <span class="st">&quot;my_future_representation&quot;</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">aggregation =</span> <span class="st">&quot;mean&quot;</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;pathofmpred_my_future_representation.rds&quot;</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>)</span></code></pre></div>
+<p>The fitted collection can then be applied directly without adding it
+to an atlas registry. Repeated rows in a new feature table are pooled
+with the aggregation rule stored in the object.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>new_features <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;new_foundation_model_features.csv&quot;</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>                         <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>custom_prediction <span class="ot">&lt;-</span> <span class="fu">predict_pathofmpred_object</span>(</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">object =</span> custom_object,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">features =</span> new_features,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">id_column =</span> <span class="st">&quot;patient_id&quot;</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>custom_prediction[, <span class="fu">c</span>(<span class="st">&quot;patient_id&quot;</span>, <span class="st">&quot;endpoint&quot;</span>, <span class="st">&quot;outcome_type&quot;</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                      <span class="st">&quot;prediction&quot;</span>, <span class="st">&quot;predicted_class_label&quot;</span>, <span class="st">&quot;lda_score&quot;</span>)]</span></code></pre></div>
+<p>For a binary endpoint, <code>predicted_class_label</code> uses the
+negative and positive labels recorded during fitting.
+<code>lda_score</code> is an uncalibrated discriminant score and is not
+a probability.</p>
+<p>The function reports feature-only IDs, outcome-only IDs, input-table
+row counts, and endpoint-specific missingness both before and after ID
+matching in <code>custom_object$data_audit</code>. Numeric outcomes with
+two observed levels are treated as binary by default. Other numeric
+outcomes are treated as continuous. Types can be fixed explicitly with a
+named vector. Binary outcomes encoded as anything other than
+<code>0</code>/<code>1</code> or <code>FALSE</code>/<code>TRUE</code>
+require an explicit event label through <code>positive_class</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>settings <span class="ot">&lt;-</span> <span class="fu">pathofmpred_control</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">components =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">outer_folds =</span> <span class="dv">5</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">inner_folds =</span> <span class="dv">5</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">repeats =</span> <span class="dv">5</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;plssvd&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">binary_selection =</span> <span class="st">&quot;AUROC&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">2026</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>custom_object <span class="ot">&lt;-</span> <span class="fu">create_pathofmpred_object</span>(</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  features, outcomes, <span class="st">&quot;patient_id&quot;</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="at">outcome_types =</span> <span class="fu">c</span>(<span class="at">APC =</span> <span class="st">&quot;binary&quot;</span>, <span class="at">Leukocyte_Fraction =</span> <span class="st">&quot;continuous&quot;</span>),</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="at">positive_class =</span> <span class="fu">c</span>(<span class="at">APC =</span> <span class="st">&quot;mutated&quot;</span>),</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="at">control =</span> settings</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>)</span></code></pre></div>
+<p><code>rsvd_oversample</code> and <code>rsvd_power</code> are
+<code>NULL</code> by default. Therefore, PathoFMPred uses the installed
+fastPLS defaults. They can be overridden through
+<code>pathofmpred_control()</code> when a documented analysis requires
+different values.</p>
+</div>
+<div id="build-titan-giga-ssl-and-prov-gigapath-objects-locally" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Build TITAN, Giga-SSL
+and Prov-GigaPath objects locally</h1>
+<p>The following three recipes use the same package function. They
+require a patient-level outcome table with a unique
+<code>patient_id</code> column and at least 101 IDs in common with the
+selected representation. The table shown below as
+<code>patient_outcomes.csv</code> is an <strong>input that users must
+create</strong> from properly licensed source data, not a file bundled
+with PathoFMPred. It should contain one cancer type only, an ID column
+and selected endpoint columns. Do not pass the cancer label or other
+metadata as an outcome. Repeat the fitting call for each cancer; the
+generic builder does not automatically stratify cancers. For the project
+endpoint definitions and source-acquisition map, see the companion <a href="https://github.com/tkcaccia/pathology-foundation-model-atlas">analysis
+repository</a>. Its <code>R/run_all.R</code> pipeline is needed to
+reproduce the published atlas rather than fit an analogous custom
+collection.</p>
+<p>The conversion commands shown here do not run during package
+installation or vignette construction. Run them only after acquiring the
+source files.</p>
+<div id="titan-inputs-and-local-fit" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> TITAN inputs and
+local fit</h2>
+<p>The official TITAN TCGA slide representations are provided by the
+TITAN authors in the gated <a href="https://huggingface.co/MahmoodLab/TITAN">MahmoodLab/TITAN
+repository</a>, including <code>TCGA_TITAN_features.pkl</code>. Access
+must be requested from the upstream repository. The project conversion
+script is <code>tools/convert_tcga_titan_pickle.py</code> in the
+companion analysis repository. It creates a CSV whose rows retain TCGA
+slide identifiers and whose 768 feature columns are named
+consistently.</p>
+<p>Outcome tables must be assembled independently. The companion
+analysis repository documents and converts the following sources:</p>
+<ul>
+<li>MC3 mutation calls from Ellrott et al. and cancer-driver annotations
+from Bailey et al.;</li>
+<li>PanImmune variables from Thorsson et al., including RNA-deconvolved
+cell fractions, transcriptomic signatures, methylation-derived leukocyte
+content, immune-repertoire quantities, in-silico neoantigens, and
+genomic-context variables;</li>
+<li>oncogenic pathway alterations from Sanchez-Vega et al.;</li>
+<li>aneuploidy and genome-doubling variables from Taylor et al.;</li>
+<li>gene fusions from Gao et al.;</li>
+<li>MSI fields from the cBioPortal TCGA PanCancer Atlas studies;
+and</li>
+<li>RNA pathway scores computed from TCGA expression matrices, including
+cancer hallmarks, glutathione, and vitamin B6 pathways.</li>
+</ul>
+<p>The exact expected filenames and local configuration are recorded in
+<a href="https://github.com/tkcaccia/pathology-foundation-model-atlas/blob/main/config/paths.example.R"><code>config/paths.example.R</code></a>.
+The acquisition and conversion workflow is documented in the companion
+<a href="https://github.com/tkcaccia/pathology-foundation-model-atlas"><code>README</code></a>.
+Molecular sources do not all link to histology at the same level. Some
+provide a TCGA sample barcode, whereas the PanImmune table links at
+participant level. A matching sample barcode does not prove that the
+slide and molecular assay came from the same block, portion, analyte, or
+tumour region.</p>
+<p>After conversion, a local TITAN collection can be fitted as follows.
+This code is intentionally not executed while the vignette is built.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>titan_features <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="st">&quot;TCGA_TITAN_features.csv&quot;</span>, <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>endpoint_table <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;patient_outcomes.csv&quot;</span>, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>pathofmpred_titan <span class="ot">&lt;-</span> <span class="fu">create_pathofmpred_object</span>(</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">feature_table =</span> titan_features,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">outcome_table =</span> endpoint_table,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">id_column =</span> <span class="st">&quot;patient_id&quot;</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">foundation_model =</span> <span class="st">&quot;TITAN&quot;</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="at">aggregation =</span> <span class="st">&quot;mean&quot;</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">pathofmpred_control</span>(</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    <span class="at">components =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    <span class="at">outer_folds =</span> <span class="dv">5</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="at">inner_folds =</span> <span class="dv">5</span>,</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>    <span class="at">repeats =</span> <span class="dv">5</span>,</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">&quot;plssvd&quot;</span>,</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>    <span class="at">binary_selection =</span> <span class="st">&quot;AUROC&quot;</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>  ),</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;pathofmpred_titan_coad.rds&quot;</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>)</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>titan_prediction <span class="ot">&lt;-</span> <span class="fu">predict_pathofmpred_object</span>(</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>  <span class="at">object =</span> pathofmpred_titan,</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>  <span class="at">features =</span> <span class="fu">read.csv</span>(<span class="st">&quot;new_TITAN_features.csv&quot;</span>, <span class="at">check.names =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>  <span class="at">id_column =</span> <span class="st">&quot;patient_id&quot;</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>)</span></code></pre></div>
+<p>Keep <code>pathofmpred_titan_coad.rds</code> local or in the
+access-controlled <code>tkcaccia/PathoFMPred-private</code> repository.
+It must not be added to the public <code>tkcaccia/PathoFMPred</code>
+repository under the current release policy.</p>
+</div>
+<div id="giga-ssl-inputs-and-local-fit" class="section level2" number="4.2">
+<h2><span class="header-section-number">4.2</span> Giga-SSL inputs and
+local fit</h2>
+<p>The <a href="https://github.com/trislaz/gigassl">Giga-SSL
+repository</a> links to the published TCGA slide embeddings in
+<code>TCGA_encoded_t5e1000</code>. Download the upstream
+<code>ids.npy</code> and <code>embeddings.npy</code> files from the
+source linked there. The companion analysis repository’s
+<code>tools/convert_foundation_model_embeddings.py</code> converts them
+to 512 numeric feature columns and a slide <code>filename</code>
+column:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">python</span> tools/convert_foundation_model_embeddings.py <span class="dt">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">--model</span> gigassl <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">--source</span> /path/to/TCGA_encoded_t5e1000 <span class="dt">\</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">--output</span> GigaSSL_TCGA_features.csv.gz <span class="dt">\</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">--manifest</span> GigaSSL_conversion.json</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>gigassl_features <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;GigaSSL_TCGA_features.csv.gz&quot;</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>                              <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>gigassl_features<span class="sc">$</span>patient_id <span class="ot">&lt;-</span> <span class="fu">substr</span>(gigassl_features<span class="sc">$</span>filename, <span class="dv">1</span><span class="dt">L</span>, <span class="dv">12</span><span class="dt">L</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>gigassl_features<span class="sc">$</span>filename <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>gigassl_object <span class="ot">&lt;-</span> <span class="fu">create_pathofmpred_object</span>(</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">feature_table =</span> gigassl_features,</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="at">outcome_table =</span> endpoint_table,</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="at">id_column =</span> <span class="st">&quot;patient_id&quot;</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="at">foundation_model =</span> <span class="st">&quot;GigaSSL&quot;</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="at">aggregation =</span> <span class="st">&quot;mean&quot;</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">pathofmpred_control</span>(</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>    <span class="at">components =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">outer_folds =</span> <span class="dv">5</span>, <span class="at">inner_folds =</span> <span class="dv">5</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>    <span class="at">repeats =</span> <span class="dv">5</span>, <span class="at">method =</span> <span class="st">&quot;plssvd&quot;</span>, <span class="at">binary_selection =</span> <span class="st">&quot;AUROC&quot;</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  ),</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;pathofmpred_gigassl_coad.rds&quot;</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="prov-gigapath-inputs-and-local-fit" class="section level2" number="4.3">
+<h2><span class="header-section-number">4.3</span> Prov-GigaPath inputs
+and local fit</h2>
+<p>Obtain the Parquet file from the <a href="https://huggingface.co/datasets/seandavis/tcga_provgigapath_embeddings">TCGA
+Prov-GigaPath embedding dataset</a> under its stated terms. The same
+conversion script selects slide-encoder layer index 13, verifies exact
+duplicate slide vectors and retains one row per slide. It produces 768
+numeric feature columns.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">python</span> tools/convert_foundation_model_embeddings.py <span class="dt">\</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">--model</span> provgigapath <span class="dt">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">--source</span> /path/to/tcga_provgigapath_embeddings.parquet <span class="dt">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">--output</span> ProvGigaPath_TCGA_final_layer_features.csv.gz <span class="dt">\</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">--manifest</span> ProvGigaPath_conversion.json <span class="dt">\</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">--provgigapath-layer</span> 13</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>prov_features <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;ProvGigaPath_TCGA_final_layer_features.csv.gz&quot;</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                          <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>prov_features<span class="sc">$</span>patient_id <span class="ot">&lt;-</span> <span class="fu">substr</span>(prov_features<span class="sc">$</span>filename, <span class="dv">1</span><span class="dt">L</span>, <span class="dv">12</span><span class="dt">L</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>prov_features<span class="sc">$</span>filename <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>prov_object <span class="ot">&lt;-</span> <span class="fu">create_pathofmpred_object</span>(</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">feature_table =</span> prov_features,</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">outcome_table =</span> endpoint_table,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">id_column =</span> <span class="st">&quot;patient_id&quot;</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">foundation_model =</span> <span class="st">&quot;ProvGigaPath&quot;</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">aggregation =</span> <span class="st">&quot;mean&quot;</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">pathofmpred_control</span>(</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>    <span class="at">components =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">outer_folds =</span> <span class="dv">5</span>, <span class="at">inner_folds =</span> <span class="dv">5</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>    <span class="at">repeats =</span> <span class="dv">5</span>, <span class="at">method =</span> <span class="st">&quot;plssvd&quot;</span>, <span class="at">binary_selection =</span> <span class="st">&quot;AUROC&quot;</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  ),</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;pathofmpred_provgigapath_coad.rds&quot;</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>)</span></code></pre></div>
+<p>Before fitting, verify that every extracted ID is a valid TCGA
+participant barcode and that the outcome table uses the same ID level.
+Repeated slide rows are pooled within patient, so slides from one
+participant do not create extra training observations. The returned
+<code>data_audit</code> records unmatched IDs and outcome-specific
+missingness. Keep the three fitted objects local unless their
+redistribution rights are established in writing.</p>
+</div>
+</div>
+<div id="use-an-authorized-atlas-collection" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Use an authorized atlas
+collection</h1>
+<p>The following example works after the user explicitly downloads the
+optional Prov-GigaPath research collection. It is not executable from a
+fresh CRAN installation until the download function has been called.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>model_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;pathofmpred-models&quot;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">fetch_pathofmpred_models</span>(<span class="st">&quot;ProvGigaPath&quot;</span>, <span class="at">destination =</span> model_dir)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">options</span>(<span class="at">PathoFMPred.model_dir =</span> model_dir)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">available_pathofm_models</span>(<span class="st">&quot;ProvGigaPath&quot;</span>, <span class="at">cancer =</span> <span class="st">&quot;COAD&quot;</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>models[, <span class="fu">c</span>(<span class="st">&quot;endpoint&quot;</span>, <span class="st">&quot;outcome_type&quot;</span>, <span class="st">&quot;n&quot;</span>)]</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">example_pathofm_features</span>(<span class="st">&quot;COAD&quot;</span>, <span class="at">foundation_model =</span> <span class="st">&quot;ProvGigaPath&quot;</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>prediction <span class="ot">&lt;-</span> <span class="fu">predict_pathofm</span>(</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  <span class="at">cancer =</span> <span class="st">&quot;COAD&quot;</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="at">features =</span> x,</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="at">foundation_model =</span> <span class="st">&quot;ProvGigaPath&quot;</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;software_example&quot;</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>)</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>prediction[, <span class="fu">c</span>(<span class="st">&quot;endpoint&quot;</span>, <span class="st">&quot;prediction&quot;</span>, <span class="st">&quot;predicted_class&quot;</span>, <span class="st">&quot;lda_score&quot;</span>)]</span></code></pre></div>
+<p>Binary scores and reference ranks are not probabilities or
+clinical-risk estimates. Metadata distinguish primary matched-cohort
+performance from five-repeat estimates; the latter are absent when
+repeats were not run.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
